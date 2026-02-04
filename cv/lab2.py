@@ -31,7 +31,7 @@ while True:
 
     circles = cv.HoughCircles(
         gray, cv.HOUGH_GRADIENT, dp=1, minDist=20,
-        param1=50, param2=18, minRadius=5, maxRadius=30
+        param1=50, param2=18, minRadius=5, maxRadius=50
     )
 
     current_centers = []
@@ -78,7 +78,7 @@ while True:
 
     cv.imshow("Circle Counter", frame)
 
-    if cv.waitKey(10) & 0xFF == ord("q"):
+    if cv.waitKey(1) & 0xFF == ord("q"):
         break
 
 vid.release()
