@@ -2,16 +2,18 @@ import cv2
 from ultralytics import YOLO
 
 # ===== CONFIG =====
-VIDEO_PATH = "plate_test.mp4"
+VIDEO_PATH = "mvideo.mp4"
 MODEL_PATH = "yolov8s.pt"
 
-CONF_THRES = 0.35
+CONF_THRES = 0.4
 
 VEHICLE_CLASSES = [2, 7]  # car, truck
 CLASS_NAMES = {
     2: "car",
     7: "truck"
 }
+
+MIN_FRAMES = 5  # phải xuất hiện >= số frame này mới đếm
 
 # ===================
 
@@ -28,13 +30,12 @@ h, w = frame.shape[:2]
 
 ROI_Y1 = int(0.3 * h)
 ROI_Y2 = int(0.85 * h)
-LINE_Y = int(0.4 * h)
 
 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 # ===== COUNT =====
 counted_ids = set()
-prev_positions = {}
+id_frames = {}
 
 total_count = 0
 count_by_type = {
@@ -55,7 +56,7 @@ while True:
 
     if results.boxes is None:
         cv2.imshow("Vehicle Counting", frame)
-        if cv2.waitKey(1) & 0xFF == 27:
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             break
         continue
 
@@ -87,47 +88,31 @@ while True:
         label = CLASS_NAMES.get(cls, "vehicle")
 
         # ===== DRAW =====
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (255,0,0), 2)
         cv2.putText(frame, f"{label} ID:{obj_id}", (x1, y1 - 5),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
 
-        # ===== COUNT =====
-        prev_cy = prev_positions.get(obj_id, None)
+        # ===== COUNT BY ID + FRAME THRESHOLD =====
+        id_frames[obj_id] = id_frames.get(obj_id, 0) + 1
 
-        if prev_cy is not None:
-
-            # đi xuống
-            if prev_cy < LINE_Y and cy >= LINE_Y:
-                if obj_id not in counted_ids:
-                    counted_ids.add(obj_id)
-                    total_count += 1
-                    count_by_type[label] += 1
-
-            # đi lên
-            elif prev_cy > LINE_Y and cy <= LINE_Y:
-                if obj_id not in counted_ids:
-                    counted_ids.add(obj_id)
-                    total_count += 1
-                    count_by_type[label] += 1
-
-        prev_positions[obj_id] = cy
-
-    # ===== LINE =====
-    cv2.line(frame, (0, LINE_Y), (w, LINE_Y), (0,0,255), 2)
+        if obj_id not in counted_ids and id_frames[obj_id] >= MIN_FRAMES:
+            counted_ids.add(obj_id)
+            total_count += 1
+            count_by_type[label] += 1
 
     # ===== DISPLAY =====
     cv2.putText(frame, f"Total: {total_count}", (20, 40),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
 
     y_offset = 80
-    # for k, v in count_by_type.items():
-    #     cv2.putText(frame, f"{k}: {v}", (20, y_offset),
-    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
-    #     y_offset += 30
+    for k, v in count_by_type.items():
+        cv2.putText(frame, f"{k}: {v}", (20, y_offset),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+        y_offset += 30
 
     cv2.imshow("Vehicle Counting", frame)
 
-    if cv2.waitKey(1) & 0xFF == 27:
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 cap.release()
