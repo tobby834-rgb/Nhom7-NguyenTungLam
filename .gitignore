@@ -6,3 +6,4 @@ __pycache__/
 *.dll
 yolov10_dataset_local/
 *.pt
+.env

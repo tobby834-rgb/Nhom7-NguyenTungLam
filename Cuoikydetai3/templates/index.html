@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Dashboard</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            display: flex;
+            margin: 0;
+        }
+
+        .left {
+            width: 70%;
+            padding: 10px;
+        }
+
+        .right {
+            width: 30%;
+            background: #111827;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .logs {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .log {
+            border-bottom: 1px solid #333;
+            padding: 10px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .log:hover {
+            background: #1f2937;
+        }
+
+        .log img {
+            width: 100%;
+            margin-top: 5px;
+            border-radius: 6px;
+        }
+
+        .intruder {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .time {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .new {
+            animation: flash 1s ease;
+        }
+
+        @keyframes flash {
+            from { background: #1e3a8a; }
+            to { background: transparent; }
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="left">
+    <h2>📷 Camera</h2>
+    <img src="/video" width="100%">
+</div>
+
+<div class="right">
+    <div class="header">
+        <h2>🚨 Logs</h2>
+        <div class="stats">
+            <div>Total: <span id="total">0</span></div>
+            <div>Last ID: <span id="lastId">-</span></div>
+        </div>
+    </div>
+
+    <div class="logs" id="logs"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal" onclick="closeModal()">
+    <img id="modalImg">
+</div>
+
+<script>
+let seen = new Set();
+let total = 0;
+
+function loadLogs(){
+    fetch('/logs')
+    .then(res => res.json())
+    .then(data => {
+
+        let container = document.getElementById("logs");
+
+        data.forEach(log => {
+            let key = log.id + "_" + log.time;
+            if(seen.has(key)) return;
+
+            seen.add(key);
+            total++;
+
+            // update stats
+            document.getElementById("total").innerText = total;
+            document.getElementById("lastId").innerText = log.id;
+
+            let div = document.createElement("div");
+            div.className = "log intruder new";
+
+            div.innerHTML = `
+                <b>INTRUDER ${log.id}</b><br>
+                <span class="time">${log.time}</span>
+                <img src="${log.image}">
+            `;
+
+            div.onclick = () => openModal(log.image);
+
+            container.prepend(div);
+
+            // remove highlight sau 1s
+            setTimeout(() => div.classList.remove("new"), 1000);
+        });
+    });
+}
+
+function openModal(src){
+    let modal = document.getElementById("modal");
+    let img = document.getElementById("modalImg");
+    img.src = src;
+    modal.style.display = "flex";
+}
+
+function closeModal(){
+    document.getElementById("modal").style.display = "none";
+}
+
+// polling
+setInterval(loadLogs, 2000);
+</script>
+
+</body>
+</html>
