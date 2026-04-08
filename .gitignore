@@ -1,6 +1,8 @@
 .venv/
-cv/.venv/
+*/.venv/
 __pycache__/
 *.pyc
 *.pyd
 *.dll
+yolov10_dataset_local/
+*.pt
