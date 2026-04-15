@@ -3,9 +3,9 @@ from email.message import EmailMessage
 import ssl
 
 def send_email(image_path, person_name):
-    sender = "ht8734519@gmail.com"
-    password = "lzok owtm zabk ggkb"
-    receiver = "lamn64265@gmail.com"
+    sender = "sender@gmail.com"
+    password = "put your app password"
+    receiver = "receiver@gmail.com"
 
     msg = EmailMessage()
     msg["Subject"] = "Thông báo phát hiện người"
